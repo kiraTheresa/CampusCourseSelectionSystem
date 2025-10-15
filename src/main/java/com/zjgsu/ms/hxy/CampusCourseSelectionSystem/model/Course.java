@@ -166,23 +166,4 @@ public class Course {
                 '}';
     }
 
-    /**
-     * 检查课程是否已满（基于当前选课人数）
-     *
-     * @param currentEnrollment 当前选课人数
-     * @return true 如果课程已满，否则 false
-     */
-    public boolean isFull(int currentEnrollment) {
-        return currentEnrollment >= capacity;
-    }
-
-    /**
-     * 获取剩余可选名额
-     *
-     * @param currentEnrollment 当前选课人数
-     * @return 剩余可选名额
-     */
-    public int getAvailableSeats(int currentEnrollment) {
-        return Math.max(0, capacity - currentEnrollment);
-    }
 }

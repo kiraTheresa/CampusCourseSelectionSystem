@@ -149,33 +149,4 @@ public class Instructor {
                 '}';
     }
 
-    /**
-     * 获取教师的显示名称（格式：姓名 - 教师编号）
-     *
-     * @return 显示名称字符串
-     */
-    public String getDisplayName() {
-        return name + " - " + instructorId;
-    }
-
-    /**
-     * 验证邮箱是否为教育邮箱（包含 .edu 域名）
-     *
-     * @return true 如果是教育邮箱，否则 false
-     */
-    public boolean isEducationalEmail() {
-        return email != null && email.toLowerCase().contains(".edu");
-    }
-
-    /**
-     * 获取邮箱域名
-     *
-     * @return 邮箱域名，如果邮箱为空则返回空字符串
-     */
-    public String getEmailDomain() {
-        if (email == null || !email.contains("@")) {
-            return "";
-        }
-        return email.substring(email.indexOf("@") + 1);
-    }
 }
