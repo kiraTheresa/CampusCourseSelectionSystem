@@ -1,0 +1,188 @@
+package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model;
+
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Course 实体类
+ * 代表课程信息，包含课程基本信息、授课教师、时间安排和容量限制
+ *
+ * @author System
+ * @version 1.0
+ * @since 2024
+ */
+@Entity
+@Table(name = "courses",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "code")
+        })
+public class Course {
+
+    /**
+     * 唯一标识符，系统自动生成 UUID
+     */
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    /**
+     * 课程编号（如 "CS101"），必须全局唯一，不可重复
+     */
+    @NotBlank(message = "课程编号不能为空")
+    @Column(unique = true, nullable = false, length = 20)
+    private String code;
+
+    /**
+     * 课程标题（如 "计算机科学导论"），必填
+     */
+    @NotBlank(message = "课程标题不能为空")
+    @Size(max = 100, message = "课程标题长度不能超过100个字符")
+    @Column(nullable = false, length = 100)
+    private String title;
+
+    /**
+     * 授课教师的唯一标识符，对应 Instructor 实体的 id，必填
+     */
+    @NotBlank(message = "授课教师ID不能为空")
+    @Column(name = "instructor_id", nullable = false)
+    private String instructorId;
+
+    /**
+     * 课程对应的时间表编号，对应 ScheduleSlot 实体的 id，必填
+     */
+    @NotBlank(message = "时间表编号不能为空")
+    @Column(name = "schedule_id", nullable = false)
+    private String scheduleId;
+
+    /**
+     * 课程最大可选人数（如 60），必填且必须为正数
+     */
+    @NotNull(message = "课程容量不能为空")
+    @Min(value = 1, message = "课程容量必须大于0")
+    @Max(value = 500, message = "课程容量不能超过500")
+    @Column(nullable = false)
+    private Integer capacity;
+
+    /**
+     * 创建时间戳，系统自动生成
+     */
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // 默认构造函数
+    public Course() {
+    }
+
+    /**
+     * 带参构造函数（不含id和createdAt）
+     *
+     * @param code 课程编号
+     * @param title 课程标题
+     * @param instructorId 授课教师ID
+     * @param scheduleId 时间表ID
+     * @param capacity 课程容量
+     */
+    public Course(String code, String title, String instructorId, String scheduleId, Integer capacity) {
+        this.code = code;
+        this.title = title;
+        this.instructorId = instructorId;
+        this.scheduleId = scheduleId;
+        this.capacity = capacity;
+    }
+
+    // Getter 和 Setter 方法
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getInstructorId() {
+        return instructorId;
+    }
+
+    public void setInstructorId(String instructorId) {
+        this.instructorId = instructorId;
+    }
+
+    public String getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(String scheduleId) {
+        this.scheduleId = scheduleId;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "Course{" +
+                "id=" + id +
+                ", code='" + code + '\'' +
+                ", title='" + title + '\'' +
+                ", instructorId='" + instructorId + '\'' +
+                ", scheduleId='" + scheduleId + '\'' +
+                ", capacity=" + capacity +
+                ", createdAt=" + createdAt +
+                '}';
+    }
+
+    /**
+     * 检查课程是否已满（基于当前选课人数）
+     *
+     * @param currentEnrollment 当前选课人数
+     * @return true 如果课程已满，否则 false
+     */
+    public boolean isFull(int currentEnrollment) {
+        return currentEnrollment >= capacity;
+    }
+
+    /**
+     * 获取剩余可选名额
+     *
+     * @param currentEnrollment 当前选课人数
+     * @return 剩余可选名额
+     */
+    public int getAvailableSeats(int currentEnrollment) {
+        return Math.max(0, capacity - currentEnrollment);
+    }
+}
