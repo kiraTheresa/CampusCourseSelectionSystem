@@ -1,7 +1,9 @@
 package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Student;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +24,9 @@ import java.util.regex.Pattern;
 public class StudentService {
 
     private final StudentRepository studentRepository;
+
+    @Autowired
+    private EnrollmentService enrollmentService;
 
     // 邮箱正则表达式
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
@@ -132,24 +137,54 @@ public class StudentService {
     }
 
     /**
-     * 删除学生
+     * 删除学生（检查选课记录）
      * @param id 学生ID
-     * @return 如果删除成功返回true，否则返回false
+     * @throws IllegalArgumentException 如果学生存在选课记录或学生不存在
      */
-    public boolean deleteStudent(UUID id) {
-        return studentRepository.deleteById(id);
+    public void deleteStudent(UUID id) {
+        // 检查学生是否存在
+        if (!studentRepository.existsById(id)) {
+            throw new IllegalArgumentException("学生不存在，ID: " + id);
+        }
+
+        // 检查是否有活跃的选课记录
+        if (hasActiveEnrollments(id)) {
+            throw new IllegalArgumentException("无法删除：该学生存在选课记录");
+        }
+
+        // 执行删除
+        boolean deleted = studentRepository.deleteById(id);
+        if (!deleted) {
+            throw new IllegalStateException("删除学生失败，ID: " + id);
+        }
     }
 
     /**
-     * 根据学号删除学生
+     * 根据学号删除学生（检查选课记录）
      * @param studentId 学号
-     * @return 如果删除成功返回true，否则返回false
+     * @throws IllegalArgumentException 如果学生存在选课记录或学生不存在
      */
-    public boolean deleteStudentByStudentId(String studentId) {
+    public void deleteStudentByStudentId(String studentId) {
         if (!StringUtils.hasText(studentId)) {
             throw new IllegalArgumentException("学号不能为空");
         }
-        return studentRepository.deleteByStudentId(studentId);
+
+        // 查找学生
+        Optional<Student> student = studentRepository.findByStudentId(studentId);
+        if (student.isEmpty()) {
+            throw new IllegalArgumentException("学生不存在，学号: " + studentId);
+        }
+
+        // 检查是否有活跃的选课记录
+        if (hasActiveEnrollments(student.get().getId())) {
+            throw new IllegalArgumentException("无法删除：该学生存在选课记录");
+        }
+
+        // 执行删除
+        boolean deleted = studentRepository.deleteByStudentId(studentId);
+        if (!deleted) {
+            throw new IllegalStateException("删除学生失败，学号: " + studentId);
+        }
     }
 
     /**
@@ -329,5 +364,22 @@ public class StudentService {
             // 目前直接返回实体，实际项目中可以考虑使用DTO
             return student;
         });
+    }
+
+    /**
+     * 检查学生是否有活跃的选课记录
+     * @param studentId 学生ID
+     * @return 如果有活跃选课记录返回true
+     */
+    private boolean hasActiveEnrollments(UUID studentId) {
+        // 这里需要注入 EnrollmentService 或 EnrollmentRepository
+        // 假设我们注入了 EnrollmentService
+        List<Enrollment> enrollments = enrollmentService.getEnrollmentsByStudent(studentId.toString());
+
+        // 活跃记录：状态为 ENROLLED 或 COMPLETED（未退课的）
+        return enrollments.stream()
+                .anyMatch(enrollment ->
+                        "ENROLLED".equals(enrollment.getStatus()) ||
+                                "COMPLETED".equals(enrollment.getStatus()));
     }
 }
