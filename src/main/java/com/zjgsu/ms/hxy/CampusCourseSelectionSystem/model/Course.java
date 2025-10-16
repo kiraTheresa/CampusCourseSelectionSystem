@@ -74,6 +74,13 @@ public class Course {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * 新增字段
+     * 当前选课人数
+     */
+    @Column(nullable = false)
+    private Integer enrolled = 0;
+
     // 默认构造函数
     public Course() {
     }
@@ -93,6 +100,7 @@ public class Course {
         this.instructorId = instructorId;
         this.scheduleId = scheduleId;
         this.capacity = capacity;
+        this.enrolled = 0; // 初始化选课人数为0
     }
 
     // Getter 和 Setter 方法
@@ -153,6 +161,14 @@ public class Course {
         this.createdAt = createdAt;
     }
 
+    public Integer getEnrolled() {
+        return enrolled;
+    }
+
+    public void setEnrolled(Integer enrolled) {
+        this.enrolled = enrolled;
+    }
+
     @Override
     public String toString() {
         return "Course{" +
@@ -163,6 +179,7 @@ public class Course {
                 ", scheduleId='" + scheduleId + '\'' +
                 ", capacity=" + capacity +
                 ", createdAt=" + createdAt +
+                ", enrolled=" + enrolled +
                 '}';
     }
 

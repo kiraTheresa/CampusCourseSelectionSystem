@@ -297,20 +297,6 @@ public class CourseService {
         }
     }
 
-    /**
-     * 检查课程容量是否已满
-     * @param courseId 课程ID
-     * @param currentEnrollment 当前选课人数
-     * @return 如果容量已满返回true，否则返回false
-     */
-    public boolean isCourseFull(UUID courseId, int currentEnrollment) {
-        Optional<Course> course = courseRepository.findById(courseId);
-        if (course.isEmpty()) {
-            throw new IllegalArgumentException("课程不存在，ID: " + courseId);
-        }
-
-        return currentEnrollment >= course.get().getCapacity();
-    }
 
     /**
      * 获取课程的剩余容量
@@ -326,5 +312,46 @@ public class CourseService {
 
         int remaining = course.get().getCapacity() - currentEnrollment;
         return Math.max(remaining, 0);
+    }
+
+    /**
+     * 增加课程选课人数
+     * @param courseId 课程ID
+     * @return 更新后的课程Optional
+     */
+    public Optional<Course> incrementEnrolled(UUID courseId) {
+        Optional<Course> courseOpt = courseRepository.findById(courseId);
+        if (courseOpt.isPresent()) {
+            Course course = courseOpt.get();
+            course.setEnrolled(course.getEnrolled() + 1);
+            return Optional.of(courseRepository.save(course));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 减少课程选课人数
+     * @param courseId 课程ID
+     * @return 更新后的课程Optional
+     */
+    public Optional<Course> decrementEnrolled(UUID courseId) {
+        Optional<Course> courseOpt = courseRepository.findById(courseId);
+        if (courseOpt.isPresent()) {
+            Course course = courseOpt.get();
+            int newEnrolled = Math.max(0, course.getEnrolled() - 1);
+            course.setEnrolled(newEnrolled);
+            return Optional.of(courseRepository.save(course));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 检查课程是否已满（基于 enrolled 字段）
+     * @param courseId 课程ID
+     * @return 如果课程已满返回true
+     */
+    public boolean isCourseFull(UUID courseId) {
+        Optional<Course> course = courseRepository.findById(courseId);
+        return course.map(c -> c.getEnrolled() >= c.getCapacity()).orElse(true);
     }
 }

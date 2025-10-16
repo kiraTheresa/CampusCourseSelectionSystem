@@ -1,5 +1,6 @@
 package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.EnrollmentRepository;
 import org.springframework.stereotype.Service;
@@ -49,70 +50,6 @@ public class EnrollmentService {
      */
     public Optional<Enrollment> getEnrollmentById(UUID id) {
         return enrollmentRepository.findById(id);
-    }
-
-    /**
-     * 学生选课
-     * @param courseId 课程ID
-     * @param studentId 学生ID
-     * @return 创建后的选课记录
-     * @throws IllegalArgumentException 如果选课条件不满足
-     */
-    public Enrollment enrollCourse(String courseId, String studentId) {
-        // 验证输入参数
-        validateCourseAndStudentIds(courseId, studentId);
-
-        // 检查学生是否存在
-        if (!studentExists(studentId)) {
-            throw new IllegalArgumentException("学生不存在，ID: " + studentId);
-        }
-
-        // 检查课程是否存在
-        if (!courseExists(courseId)) {
-            throw new IllegalArgumentException("课程不存在，ID: " + courseId);
-        }
-
-        // 检查是否已经选过该课程
-        if (enrollmentRepository.existsByCourseIdAndStudentId(courseId, studentId)) {
-            throw new IllegalArgumentException("学生已选该课程，无法重复选课");
-        }
-
-        // 检查课程容量
-        long currentEnrollment = enrollmentRepository.countByCourseId(courseId);
-        if (isCourseFull(courseId, currentEnrollment)) {
-            throw new IllegalArgumentException("课程容量已满，无法选课");
-        }
-
-        // 创建选课记录
-        Enrollment enrollment = new Enrollment(courseId, studentId);
-        return enrollmentRepository.save(enrollment);
-    }
-
-    /**
-     * 学生退课
-     * @param courseId 课程ID
-     * @param studentId 学生ID
-     * @return 如果退课成功返回true，否则返回false
-     */
-    public boolean withdrawCourse(String courseId, String studentId) {
-        // 验证输入参数
-        validateCourseAndStudentIds(courseId, studentId);
-
-        Optional<Enrollment> enrollment = enrollmentRepository.findByCourseIdAndStudentId(courseId, studentId);
-
-        if (enrollment.isPresent()) {
-            Enrollment enroll = enrollment.get();
-            // 检查是否可以退课（例如，课程是否已结束等）
-            if (canWithdrawCourse(enroll)) {
-                enroll.setStatus("WITHDRAWN");
-                enrollmentRepository.save(enroll);
-                return true;
-            } else {
-                throw new IllegalArgumentException("当前无法退课，可能课程已结束或已评分");
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -347,16 +284,15 @@ public class EnrollmentService {
     }
 
     /**
-     * 检查课程是否已满
+     * 检查课程是否已满（优化版）
      */
     private boolean isCourseFull(String courseId, long currentEnrollment) {
         try {
             UUID courseUUID = UUID.fromString(courseId);
-            return courseService.isCourseFull(courseUUID, (int) currentEnrollment);
+            return courseService.isCourseFull(courseUUID);
         } catch (IllegalArgumentException e) {
             // 处理非UUID格式的courseId
-            Optional<com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course> course =
-                    courseService.getCourseByCode(courseId);
+            Optional<Course> course = courseService.getCourseByCode(courseId);
             return course.map(c -> currentEnrollment >= c.getCapacity()).orElse(true);
         }
     }
@@ -395,4 +331,85 @@ public class EnrollmentService {
     public long getEnrollmentCount() {
         return enrollmentRepository.count();
     }
+
+    /**
+     * 解析UUID，处理字符串格式的ID
+     */
+    private UUID parseUUID(String id) {
+        try {
+            return UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            // 如果不是UUID格式，可能需要其他处理方式
+            throw new IllegalArgumentException("无效的ID格式: " + id);
+        }
+    }
+
+
+    /**
+     * 学生选课（完善版）
+     */
+    public Enrollment enrollCourse(String courseId, String studentId) {
+        // 验证输入参数
+        validateCourseAndStudentIds(courseId, studentId);
+
+        // 检查学生是否存在
+        if (!studentExists(studentId)) {
+            throw new IllegalArgumentException("学生不存在，ID: " + studentId);
+        }
+
+        // 检查课程是否存在
+        UUID courseUUID = parseUUID(courseId);
+        if (!courseService.courseExists(courseUUID)) {
+            throw new IllegalArgumentException("课程不存在，ID: " + courseId);
+        }
+
+        // 检查是否已经选过该课程
+        if (enrollmentRepository.existsByCourseIdAndStudentId(courseId, studentId)) {
+            throw new IllegalArgumentException("学生已选该课程，无法重复选课");
+        }
+
+        // 检查课程容量（使用 enrolled 字段）
+        if (courseService.isCourseFull(courseUUID)) {
+            throw new IllegalArgumentException("课程容量已满，无法选课");
+        }
+
+        // 创建选课记录
+        Enrollment enrollment = new Enrollment(courseId, studentId);
+        Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
+
+        // 级联更新：增加课程选课人数
+        courseService.incrementEnrolled(courseUUID);
+
+        return savedEnrollment;
+    }
+
+    /**
+     * 学生退课（完善版）
+     */
+    public boolean withdrawCourse(String courseId, String studentId) {
+        // 验证输入参数
+        validateCourseAndStudentIds(courseId, studentId);
+
+        Optional<Enrollment> enrollment = enrollmentRepository.findByCourseIdAndStudentId(courseId, studentId);
+
+        if (enrollment.isPresent()) {
+            Enrollment enroll = enrollment.get();
+            // 检查是否可以退课
+            if (canWithdrawCourse(enroll)) {
+                enroll.setStatus("WITHDRAWN");
+                enrollmentRepository.save(enroll);
+
+                // 级联更新：减少课程选课人数
+                UUID courseUUID = parseUUID(courseId);
+                courseService.decrementEnrolled(courseUUID);
+
+                return true;
+            } else {
+                throw new IllegalArgumentException("当前无法退课，可能课程已结束或已评分");
+            }
+        }
+
+        return false;
+    }
+
 }
