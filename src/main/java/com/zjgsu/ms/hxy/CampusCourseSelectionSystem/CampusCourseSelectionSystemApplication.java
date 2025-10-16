@@ -9,8 +9,18 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 
-@SpringBootApplication
+// 如果不需要数据库功能，排除数据源自动配置
+@SpringBootApplication(exclude = {
+        DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class
+})
+
+
 public class CampusCourseSelectionSystemApplication {
 
     @Autowired
