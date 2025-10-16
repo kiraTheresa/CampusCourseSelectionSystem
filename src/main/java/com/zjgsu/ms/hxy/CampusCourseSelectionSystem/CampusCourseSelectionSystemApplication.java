@@ -28,15 +28,16 @@ public class CampusCourseSelectionSystemApplication {
 
     @PostConstruct
     public void initData() {
-        // 检查是否已经初始化过
-        if (courseService.isInitialized() || studentService.isInitialized()) {
-            System.out.println("=== 测试数据已存在，跳过初始化 ===");
-            return;
-        }
-
         System.out.println("=== 开始初始化测试数据 ===");
 
         try {
+            // 检查是否已经初始化过（避免重复初始化）
+            if (isAlreadyInitialized()) {
+                System.out.println("=== 测试数据已存在，跳过初始化 ===");
+                printStatistics();
+                return;
+            }
+
             // 1. 创建测试课程
             initCourses();
 
@@ -51,7 +52,20 @@ public class CampusCourseSelectionSystemApplication {
 
         } catch (Exception e) {
             System.err.println("初始化测试数据时发生错误: " + e.getMessage());
+            // 不抛出异常，避免应用启动失败
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 检查是否已经初始化过数据
+     */
+    private boolean isAlreadyInitialized() {
+        try {
+            return courseService.getCourseCount() > 0 || studentService.getStudentCount() > 0;
+        } catch (Exception e) {
+            // 如果出现异常，认为没有初始化过
+            return false;
         }
     }
 
@@ -77,6 +91,7 @@ public class CampusCourseSelectionSystemApplication {
 
         } catch (Exception e) {
             System.err.println("创建课程失败: " + e.getMessage());
+            // 继续执行，不中断初始化流程
         }
     }
 
@@ -102,6 +117,7 @@ public class CampusCourseSelectionSystemApplication {
 
         } catch (Exception e) {
             System.err.println("创建学生失败: " + e.getMessage());
+            // 继续执行，不中断初始化流程
         }
     }
 
@@ -109,49 +125,53 @@ public class CampusCourseSelectionSystemApplication {
         System.out.println("创建测试选课记录...");
 
         try {
-            // 获取课程和学生信息
-            var cs101 = courseService.getCourseByCode("CS101").orElseThrow();
-            var math201 = courseService.getCourseByCode("MATH201").orElseThrow();
-            var eng101 = courseService.getCourseByCode("ENG101").orElseThrow();
+            // 获取课程信息（使用安全的获取方式）
+            var cs101 = getCourseSafely("CS101");
+            var math201 = getCourseSafely("MATH201");
+            var eng101 = getCourseSafely("ENG101");
 
-            var student1 = studentService.getStudentByStudentId("2024001").orElseThrow();
-            var student2 = studentService.getStudentByStudentId("2024002").orElseThrow();
-            var student3 = studentService.getStudentByStudentId("2024003").orElseThrow();
-            var student4 = studentService.getStudentByStudentId("2024004").orElseThrow();
+            // 获取学生信息（使用安全的获取方式）
+            var student1 = getStudentSafely("2024001");
+            var student2 = getStudentSafely("2024002");
+            var student3 = getStudentSafely("2024003");
+            var student4 = getStudentSafely("2024004");
+
+            if (cs101 == null || math201 == null || eng101 == null ||
+                    student1 == null || student2 == null || student3 == null || student4 == null) {
+                System.err.println("课程或学生数据不完整，跳过选课初始化");
+                return;
+            }
 
             // 学生1选3门课
-            enrollmentService.enrollCourse(cs101.getId().toString(), student1.getId().toString());
-            enrollmentService.enrollCourse(math201.getId().toString(), student1.getId().toString());
-            enrollmentService.enrollCourse(eng101.getId().toString(), student1.getId().toString());
-            System.out.println("学生 " + student1.getName() + " 选课3门");
+            enrollSafely(cs101.getId().toString(), student1.getId().toString(), "学生 " + student1.getName() + " 选课3门");
+            enrollSafely(math201.getId().toString(), student1.getId().toString(), null);
+            enrollSafely(eng101.getId().toString(), student1.getId().toString(), null);
 
             // 学生2选2门课
-            enrollmentService.enrollCourse(cs101.getId().toString(), student2.getId().toString());
-            enrollmentService.enrollCourse(math201.getId().toString(), student2.getId().toString());
-            System.out.println("学生 " + student2.getName() + " 选课2门");
+            enrollSafely(cs101.getId().toString(), student2.getId().toString(), "学生 " + student2.getName() + " 选课2门");
+            enrollSafely(math201.getId().toString(), student2.getId().toString(), null);
 
             // 学生3选1门课
-            enrollmentService.enrollCourse(eng101.getId().toString(), student3.getId().toString());
-            System.out.println("学生 " + student3.getName() + " 选课1门");
+            enrollSafely(eng101.getId().toString(), student3.getId().toString(), "学生 " + student3.getName() + " 选课1门");
 
             // 学生4选2门课
-            enrollmentService.enrollCourse(cs101.getId().toString(), student4.getId().toString());
-            enrollmentService.enrollCourse(eng101.getId().toString(), student4.getId().toString());
-            System.out.println("学生 " + student4.getName() + " 选课2门");
+            enrollSafely(cs101.getId().toString(), student4.getId().toString(), "学生 " + student4.getName() + " 选课2门");
+            enrollSafely(eng101.getId().toString(), student4.getId().toString(), null);
 
             // 测试退课功能
-            enrollmentService.withdrawCourse(eng101.getId().toString(), student1.getId().toString());
-            System.out.println("学生 " + student1.getName() + " 退选英语课");
+            withdrawSafely(eng101.getId().toString(), student1.getId().toString(), "学生 " + student1.getName() + " 退选英语课");
 
             // 测试成绩录入
             var enrollment = enrollmentService.getEnrollmentsByStudent(student1.getId().toString())
                     .stream()
                     .filter(e -> e.getCourseId().equals(cs101.getId().toString()))
                     .findFirst()
-                    .orElseThrow();
+                    .orElse(null);
 
-            enrollmentService.updateGrade(enrollment.getId(), 85.5);
-            System.out.println("为学生 " + student1.getName() + " 的计算机课程录入成绩: 85.5");
+            if (enrollment != null) {
+                enrollmentService.updateGrade(enrollment.getId(), 85.5);
+                System.out.println("为学生 " + student1.getName() + " 的计算机课程录入成绩: 85.5");
+            }
 
         } catch (Exception e) {
             System.err.println("创建选课记录失败: " + e.getMessage());
@@ -159,22 +179,88 @@ public class CampusCourseSelectionSystemApplication {
         }
     }
 
+    /**
+     * 安全获取课程（避免Optional操作异常）
+     */
+    private Course getCourseSafely(String courseCode) {
+        try {
+            return courseService.getCourseByCode(courseCode).orElse(null);
+        } catch (Exception e) {
+            System.err.println("获取课程失败: " + courseCode + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 安全获取学生（避免Optional操作异常）
+     */
+    private Student getStudentSafely(String studentId) {
+        try {
+            return studentService.getStudentByStudentId(studentId).orElse(null);
+        } catch (Exception e) {
+            System.err.println("获取学生失败: " + studentId + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 安全选课（捕获异常并继续执行）
+     */
+    private void enrollSafely(String courseId, String studentId, String successMessage) {
+        try {
+            enrollmentService.enrollCourse(courseId, studentId);
+            if (successMessage != null) {
+                System.out.println(successMessage);
+            }
+        } catch (Exception e) {
+            System.err.println("选课失败: 课程=" + courseId + ", 学生=" + studentId + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * 安全退课（捕获异常并继续执行）
+     */
+    private void withdrawSafely(String courseId, String studentId, String successMessage) {
+        try {
+            enrollmentService.withdrawCourse(courseId, studentId);
+            if (successMessage != null) {
+                System.out.println(successMessage);
+            }
+        } catch (Exception e) {
+            System.err.println("退课失败: 课程=" + courseId + ", 学生=" + studentId + " - " + e.getMessage());
+        }
+    }
+
     private void printStatistics() {
-        System.out.println("\n=== 系统统计信息 ===");
-        System.out.println("课程总数: " + courseService.getCourseCount());
-        System.out.println("学生总数: " + studentService.getStudentCount());
-        System.out.println("选课记录总数: " + enrollmentService.getEnrollmentCount());
+        try {
+            System.out.println("\n=== 系统统计信息 ===");
+            System.out.println("课程总数: " + courseService.getCourseCount());
+            System.out.println("学生总数: " + studentService.getStudentCount());
+            System.out.println("选课记录总数: " + enrollmentService.getEnrollmentCount());
 
-        // 各课程选课人数
-        courseService.getAllCourses().forEach(course -> {
-            long enrollmentCount = enrollmentService.getEnrollmentCountByCourse(course.getId().toString());
-            System.out.println("课程 " + course.getCode() + " 选课人数: " + enrollmentCount + "/" + course.getCapacity());
-        });
+            // 各课程选课人数
+            courseService.getAllCourses().forEach(course -> {
+                try {
+                    long enrollmentCount = enrollmentService.getEnrollmentCountByCourse(course.getId().toString());
+                    System.out.println("课程 " + course.getCode() + " 选课人数: " + enrollmentCount + "/" + course.getCapacity() +
+                            " (已注册: " + course.getEnrolled() + ")");
+                } catch (Exception e) {
+                    System.err.println("获取课程选课人数失败: " + course.getCode() + " - " + e.getMessage());
+                }
+            });
 
-        // 各学生选课情况
-        studentService.getAllStudents().forEach(student -> {
-            long enrollmentCount = enrollmentService.getEnrollmentCountByStudent(student.getId().toString());
-            System.out.println("学生 " + student.getName() + " 选课数量: " + enrollmentCount);
-        });
+            // 各学生选课情况
+            studentService.getAllStudents().forEach(student -> {
+                try {
+                    long enrollmentCount = enrollmentService.getEnrollmentCountByStudent(student.getId().toString());
+                    System.out.println("学生 " + student.getName() + " 选课数量: " + enrollmentCount);
+                } catch (Exception e) {
+                    System.err.println("获取学生选课数量失败: " + student.getName() + " - " + e.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            System.err.println("打印统计信息失败: " + e.getMessage());
+        }
     }
 }
