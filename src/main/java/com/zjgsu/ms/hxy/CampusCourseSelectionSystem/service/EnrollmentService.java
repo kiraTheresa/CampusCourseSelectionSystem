@@ -3,6 +3,7 @@ package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.EnrollmentRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,13 +29,12 @@ public class EnrollmentService {
     private final CourseService courseService;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepository,
-                             StudentService studentService,
+                             @Lazy StudentService studentService,  // 添加 @Lazy  // ← 这里依赖了StudentService 导致了循环依赖
                              CourseService courseService) {
         this.enrollmentRepository = enrollmentRepository;
         this.studentService = studentService;
         this.courseService = courseService;
     }
-
     /**
      * 获取所有选课记录
      * @return 选课记录列表
