@@ -1,5 +1,7 @@
 package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.exception.BusinessException;
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.exception.ResourceNotFoundException;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Student;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.StudentRepository;
@@ -141,21 +143,19 @@ public class StudentService {
      * @param id 学生ID
      * @throws IllegalArgumentException 如果学生存在选课记录或学生不存在
      */
+    // 在StudentService中修改删除方法示例
     public void deleteStudent(UUID id) {
-        // 检查学生是否存在
         if (!studentRepository.existsById(id)) {
-            throw new IllegalArgumentException("学生不存在，ID: " + id);
+            throw new ResourceNotFoundException("学生不存在，ID: " + id);
         }
 
-        // 检查是否有活跃的选课记录
         if (hasActiveEnrollments(id)) {
-            throw new IllegalArgumentException("无法删除：该学生存在选课记录");
+            throw new BusinessException("无法删除：该学生存在选课记录");
         }
 
-        // 执行删除
         boolean deleted = studentRepository.deleteById(id);
         if (!deleted) {
-            throw new IllegalStateException("删除学生失败，ID: " + id);
+            throw new BusinessException("删除学生失败，ID: " + id);
         }
     }
 
