@@ -28,6 +28,12 @@ public class CampusCourseSelectionSystemApplication {
 
     @PostConstruct
     public void initData() {
+        // 检查是否已经初始化过
+        if (courseService.isInitialized() || studentService.isInitialized()) {
+            System.out.println("=== 测试数据已存在，跳过初始化 ===");
+            return;
+        }
+
         System.out.println("=== 开始初始化测试数据 ===");
 
         try {

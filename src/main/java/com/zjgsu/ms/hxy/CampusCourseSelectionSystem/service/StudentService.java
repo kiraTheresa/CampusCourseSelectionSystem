@@ -382,4 +382,9 @@ public class StudentService {
                         "ENROLLED".equals(enrollment.getStatus()) ||
                                 "COMPLETED".equals(enrollment.getStatus()));
     }
+
+    //
+    public boolean isInitialized() {
+        return studentRepository.count() > 0;
+    }
 }

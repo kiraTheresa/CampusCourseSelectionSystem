@@ -354,4 +354,10 @@ public class CourseService {
         Optional<Course> course = courseRepository.findById(courseId);
         return course.map(c -> c.getEnrolled() >= c.getCapacity()).orElse(true);
     }
+
+    //
+    public boolean isInitialized() {
+        return courseRepository.count() > 0;
+    }
+
 }
