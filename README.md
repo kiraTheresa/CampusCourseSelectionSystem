@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 校园选课管理系统
 
 ## 项目说明
@@ -144,3 +145,7 @@ Content-Type: application/json
 ## License
 
 MIT
+=======
+# 
+韩教授 这是我本次的作业
+>>>>>>> e72f7d2447aadaff280c2a6753da8c341260a0d2
