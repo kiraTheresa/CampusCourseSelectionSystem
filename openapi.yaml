@@ -1,0 +1,932 @@
+openapi: 3.0.0
+info:
+  title: 校园选课管理系统 API
+  description: 提供课程管理、学生管理和选课管理的 RESTful API 接口
+  version: 1.0.0
+  contact:
+    name: 系统管理员
+    email: admin@example.com
+servers:
+  - url: http://localhost:8080
+    description: 本地开发环境
+
+paths:
+  # 课程管理接口
+  /api/courses:
+    get:
+      summary: 查询所有课程
+      tags: [课程管理]
+      responses:
+        '200':
+          description: 成功获取课程列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      summary: 创建课程
+      tags: [课程管理]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '201':
+          description: 课程创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/courses/{id}:
+    get:
+      summary: 根据ID查询单个课程
+      tags: [课程管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取课程信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      summary: 更新课程
+      tags: [课程管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseUpdateRequest'
+      responses:
+        '200':
+          description: 课程更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      summary: 删除课程
+      tags: [课程管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 课程删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/courses/code/{code}:
+    get:
+      summary: 根据课程编号查询课程
+      tags: [课程管理]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: 课程编号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取课程信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/courses/instructor/{instructorId}:
+    get:
+      summary: 根据教师ID查询课程
+      tags: [课程管理]
+      parameters:
+        - name: instructorId
+          in: path
+          required: true
+          description: 教师ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取教师的课程列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/courses/search:
+    get:
+      summary: 根据标题搜索课程
+      tags: [课程管理]
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          description: 搜索关键词
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # 学生管理接口
+  /api/students:
+    get:
+      summary: 查询所有学生
+      tags: [学生管理]
+      responses:
+        '200':
+          description: 成功获取学生列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      summary: 创建学生
+      tags: [学生管理]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentRequest'
+      responses:
+        '201':
+          description: 学生创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/{id}:
+    get:
+      summary: 根据ID查询学生
+      tags: [学生管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取学生信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      summary: 更新学生信息
+      tags: [学生管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentUpdateRequest'
+      responses:
+        '200':
+          description: 学生信息更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      summary: 删除学生
+      tags: [学生管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 学生删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/student-id/{studentId}:
+    get:
+      summary: 根据学号查询学生
+      tags: [学生管理]
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          description: 学号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取学生信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/email/{email}:
+    get:
+      summary: 根据邮箱查询学生
+      tags: [学生管理]
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: 邮箱地址
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: 成功获取学生信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/major/{major}:
+    get:
+      summary: 根据专业查询学生
+      tags: [学生管理]
+      parameters:
+        - name: major
+          in: path
+          required: true
+          description: 专业名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取专业学生列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/grade/{grade}:
+    get:
+      summary: 根据入学年份查询学生
+      tags: [学生管理]
+      parameters:
+        - name: grade
+          in: path
+          required: true
+          description: 入学年份
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功获取同年级学生列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/search:
+    get:
+      summary: 根据姓名搜索学生
+      tags: [学生管理]
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          description: 搜索关键词
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/check-student-id/{studentId}:
+    get:
+      summary: 检查学号是否存在
+      tags: [学生管理]
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          description: 学号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 检查结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/students/check-email/{email}:
+    get:
+      summary: 检查邮箱是否存在
+      tags: [学生管理]
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: 邮箱地址
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: 检查结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # 选课管理接口
+  /api/enrollments:
+    get:
+      summary: 查询所有选课记录
+      tags: [选课管理]
+      responses:
+        '200':
+          description: 成功获取选课记录列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      summary: 学生选课
+      tags: [选课管理]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentRequest'
+      responses:
+        '201':
+          description: 选课成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: 选课失败（如课程已满、已选过等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/{id}:
+    get:
+      summary: 根据ID查询选课记录
+      tags: [选课管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 选课记录ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取选课记录信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      summary: 学生退课
+      tags: [选课管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 选课记录ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 退课成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/course/{courseId}/student/{studentId}:
+    delete:
+      summary: 根据课程和学生退课
+      tags: [选课管理]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+        - name: studentId
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 退课成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/course/{courseId}:
+    get:
+      summary: 按课程查询选课记录
+      tags: [选课管理]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取课程的选课记录列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/student/{studentId}:
+    get:
+      summary: 按学生查询选课记录
+      tags: [选课管理]
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取学生的选课记录列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/status/{status}:
+    get:
+      summary: 按状态查询选课记录
+      tags: [选课管理]
+      parameters:
+        - name: status
+          in: path
+          required: true
+          description: 选课状态
+          schema:
+            type: string
+            enum: [ENROLLED, WITHDRAWN, COMPLETED, FAILED]
+      responses:
+        '200':
+          description: 成功获取指定状态的选课记录列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/{id}/status:
+    put:
+      summary: 更新选课状态
+      tags: [选课管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 选课记录ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdateRequest'
+      responses:
+        '200':
+          description: 状态更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/{id}/grade:
+    put:
+      summary: 更新成绩
+      tags: [选课管理]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 选课记录ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeUpdateRequest'
+      responses:
+        '200':
+          description: 成绩更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/course/{courseId}/count:
+    get:
+      summary: 获取课程选课人数
+      tags: [选课管理]
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取选课人数
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/student/{studentId}/count:
+    get:
+      summary: 获取学生选课数量
+      tags: [选课管理]
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取选课数量
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/enrollments/check-enrollment:
+    get:
+      summary: 检查学生是否已选某课程
+      tags: [选课管理]
+      parameters:
+        - name: courseId
+          in: query
+          required: true
+          description: 课程ID
+          schema:
+            type: string
+        - name: studentId
+          in: query
+          required: true
+          description: 学生ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 检查结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应状态码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          type: object
+          description: 响应数据
+          nullable: true
+
+    # 课程模型定义
+    CourseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 唯一标识符，系统自动生成 UUID
+        code:
+          type: string
+          description: 课程编号（如 "CS101"），必须全局唯一
+          maxLength: 20
+        title:
+          type: string
+          description: 课程标题（如 "计算机科学导论"）
+          maxLength: 100
+        instructorId:
+          type: string
+          description: 授课教师的唯一标识符
+        scheduleId:
+          type: string
+          description: 课程对应的时间表编号
+        capacity:
+          type: integer
+          description: 课程最大可选人数
+          minimum: 1
+          maximum: 500
+        enrolled:
+          type: integer
+          description: 当前选课人数
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间戳，系统自动生成
+      required:
+        - id
+        - code
+        - title
+        - instructorId
+        - scheduleId
+        - capacity
+        - enrolled
+        - createdAt
+
+    CourseRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 课程编号（如 "CS101"），必须全局唯一
+          maxLength: 20
+        title:
+          type: string
+          description: 课程标题（如 "计算机科学导论"）
+          maxLength: 100
+        instructorId:
+          type: string
+          description: 授课教师的唯一标识符
+        scheduleId:
+          type: string
+          description: 课程对应的时间表编号
+        capacity:
+          type: integer
+          description: 课程最大可选人数
+          minimum: 1
+          maximum: 500
+      required:
+        - code
+        - title
+        - instructorId
+        - scheduleId
+        - capacity
+
+    CourseUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: 课程标题（如 "计算机科学导论"）
+          maxLength: 100
+        instructorId:
+          type: string
+          description: 授课教师的唯一标识符
+        scheduleId:
+          type: string
+          description: 课程对应的时间表编号
+        capacity:
+          type: integer
+          description: 课程最大可选人数
+          minimum: 1
+          maximum: 500
+
+    # 学生模型定义
+    StudentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 唯一标识符，系统自动生成 UUID
+        studentId:
+          type: string
+          description: 学号（如 "2024001"），必须全局唯一
+        name:
+          type: string
+          description: 学生姓名
+        major:
+          type: string
+          description: 专业名称（如 "计算机科学与技术"）
+        grade:
+          type: integer
+          description: 入学年份（如 2024）
+          minimum: 2000
+          maximum: 2100
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间戳，系统自动生成
+      required:
+        - id
+        - studentId
+        - name
+        - major
+        - grade
+        - email
+        - createdAt
+
+    StudentRequest:
+      type: object
+      properties:
+        studentId:
+          type: string
+          description: 学号（如 "2024001"），必须全局唯一
+        name:
+          type: string
+          description: 学生姓名
+        major:
+          type: string
+          description: 专业名称（如 "计算机科学与技术"）
+        grade:
+          type: integer
+          description: 入学年份（如 2024）
+          minimum: 2000
+          maximum: 2100
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+      required:
+        - studentId
+        - name
+        - major
+        - grade
+        - email
+
+    StudentUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 学生姓名
+        major:
+          type: string
+          description: 专业名称（如 "计算机科学与技术"）
+        grade:
+          type: integer
+          description: 入学年份（如 2024）
+          minimum: 2000
+          maximum: 2100
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+
+    # 选课模型定义
+    EnrollmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 唯一标识符，系统自动生成 UUID
+        courseId:
+          type: string
+          description: 选课对应的课程 ID
+        studentId:
+          type: string
+          description: 选课学生的唯一标识符
+        enrolledAt:
+          type: string
+          format: date-time
+          description: 选课时间戳，系统自动生成
+        status:
+          type: string
+          description: 选课状态
+          enum: [ENROLLED, WITHDRAWN, COMPLETED, FAILED]
+          default: ENROLLED
+        grade:
+          type: number
+          description: 学生该课程成绩
+          minimum: 0
+          maximum: 100
+          nullable: true
+      required:
+        - id
+        - courseId
+        - studentId
+        - enrolledAt
+        - status
+
+    EnrollmentRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+          description: 选课对应的课程 ID
+        studentId:
+          type: string
+          description: 选课学生的唯一标识符
+      required:
+        - courseId
+        - studentId
+
+    StatusUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 选课状态
+          enum: [ENROLLED, WITHDRAWN, COMPLETED, FAILED]
+      required:
+        - status
+
+    GradeUpdateRequest:
+      type: object
+      properties:
+        grade:
+          type: number
+          description: 成绩
+          minimum: 0
+          maximum: 100
+      required:
+        - grade
+
+    # 兼容性定义，保持向后兼容
+    Course:
+      $ref: '#/components/schemas/CourseResponse'
+
+    Student:
+      $ref: '#/components/schemas/StudentResponse'
+
+    Enrollment:
+      $ref: '#/components/schemas/EnrollmentResponse'
