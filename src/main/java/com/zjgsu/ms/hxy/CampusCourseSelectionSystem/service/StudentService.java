@@ -143,7 +143,6 @@ public class StudentService {
      * @param id 学生ID
      * @throws IllegalArgumentException 如果学生存在选课记录或学生不存在
      */
-    // 在StudentService中修改删除方法示例
     public void deleteStudent(UUID id) {
         if (!studentRepository.existsById(id)) {
             throw new ResourceNotFoundException("学生不存在，ID: " + id);
@@ -153,10 +152,8 @@ public class StudentService {
             throw new BusinessException("无法删除：该学生存在选课记录");
         }
 
-        boolean deleted = studentRepository.deleteById(id);
-        if (!deleted) {
-            throw new BusinessException("删除学生失败，ID: " + id);
-        }
+        // Spring Data JPA的deleteById方法返回void
+        studentRepository.deleteById(id);
     }
 
     /**
@@ -181,10 +178,7 @@ public class StudentService {
         }
 
         // 执行删除
-        boolean deleted = studentRepository.deleteByStudentId(studentId);
-        if (!deleted) {
-            throw new IllegalStateException("删除学生失败，学号: " + studentId);
-        }
+        studentRepository.delete(student.get());
     }
 
     /**
@@ -237,9 +231,7 @@ public class StudentService {
         if (!StringUtils.hasText(major)) {
             throw new IllegalArgumentException("专业名称不能为空");
         }
-        return studentRepository.findAll().stream()
-                .filter(student -> student.getMajor().equalsIgnoreCase(major))
-                .toList();
+        return studentRepository.findByMajorIgnoreCase(major);
     }
 
     /**
@@ -254,9 +246,7 @@ public class StudentService {
         if (grade < 2000 || grade > 2100) {
             throw new IllegalArgumentException("入学年份必须在2000-2100之间");
         }
-        return studentRepository.findAll().stream()
-                .filter(student -> student.getGrade().equals(grade))
-                .toList();
+        return studentRepository.findByGrade(grade);
     }
 
     /**
@@ -268,9 +258,7 @@ public class StudentService {
         if (!StringUtils.hasText(keyword)) {
             throw new IllegalArgumentException("搜索关键词不能为空");
         }
-        return studentRepository.findAll().stream()
-                .filter(student -> student.getName().toLowerCase().contains(keyword.toLowerCase()))
-                .toList();
+        return studentRepository.findByNameContainingIgnoreCase(keyword);
     }
 
     /**

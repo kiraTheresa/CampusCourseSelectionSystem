@@ -100,7 +100,7 @@ public class EnrollmentService {
         if (!StringUtils.hasText(courseId)) {
             throw new IllegalArgumentException("课程ID不能为空");
         }
-        return enrollmentRepository.countByCourseId(courseId);
+        return enrollmentRepository.countByCourseIdAndStatusNot(courseId, "WITHDRAWN");
     }
 
     /**
@@ -112,7 +112,7 @@ public class EnrollmentService {
         if (!StringUtils.hasText(studentId)) {
             throw new IllegalArgumentException("学生ID不能为空");
         }
-        return enrollmentRepository.countByStudentId(studentId);
+        return enrollmentRepository.countByStudentIdAndStatusNot(studentId, "WITHDRAWN");
     }
 
     /**
@@ -129,7 +129,13 @@ public class EnrollmentService {
             throw new IllegalArgumentException("无效的选课状态: " + status);
         }
 
-        return enrollmentRepository.updateStatus(id, status);
+        Optional<Enrollment> enrollment = enrollmentRepository.findById(id);
+        if (enrollment.isPresent()) {
+            Enrollment enroll = enrollment.get();
+            enroll.setStatus(status);
+            return Optional.of(enrollmentRepository.save(enroll));
+        }
+        return Optional.empty();
     }
 
     /**
@@ -151,7 +157,8 @@ public class EnrollmentService {
             Enrollment enroll = enrollment.get();
             // 只有在特定状态下才能更新成绩
             if (canUpdateGrade(enroll)) {
-                return enrollmentRepository.updateGrade(id, grade);
+                enroll.setGrade(grade);
+                return Optional.of(enrollmentRepository.save(enroll));
             } else {
                 throw new IllegalArgumentException("当前无法更新成绩，选课状态为: " + enroll.getStatus());
             }
@@ -181,7 +188,20 @@ public class EnrollmentService {
             }
         }
 
-        return enrollmentRepository.updateGradesForCourse(courseId, grades);
+        // 获取该课程的所有选课记录
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        int updatedCount = 0;
+
+        for (Enrollment enrollment : enrollments) {
+            String studentId = enrollment.getStudentId();
+            if (grades.containsKey(studentId) && canUpdateGrade(enrollment)) {
+                enrollment.setGrade(grades.get(studentId));
+                enrollmentRepository.save(enrollment);
+                updatedCount++;
+            }
+        }
+
+        return updatedCount;
     }
 
     /**
@@ -190,7 +210,11 @@ public class EnrollmentService {
      * @return 如果删除成功返回true，否则返回false
      */
     public boolean deleteEnrollment(UUID id) {
-        return enrollmentRepository.deleteById(id);
+        if (enrollmentRepository.existsById(id)) {
+            enrollmentRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -203,7 +227,7 @@ public class EnrollmentService {
         if (!StringUtils.hasText(courseId) || !StringUtils.hasText(studentId)) {
             return false;
         }
-        return enrollmentRepository.existsByCourseIdAndStudentId(courseId, studentId);
+        return enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, "WITHDRAWN");
     }
 
     /**
@@ -364,7 +388,7 @@ public class EnrollmentService {
         }
 
         // 检查是否已经选过该课程
-        if (enrollmentRepository.existsByCourseIdAndStudentId(courseId, studentId)) {
+        if (enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, "WITHDRAWN")) {
             throw new IllegalArgumentException("学生已选该课程，无法重复选课");
         }
 

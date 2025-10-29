@@ -97,7 +97,10 @@ public class CourseService {
             throw new IllegalArgumentException("课程编号已被其他课程使用: " + course.getCode());
         }
 
-        return courseRepository.update(id, course);
+        // 设置ID并保存
+        course.setId(id);
+        return Optional.of(courseRepository.save(course));
+    }
     }
 
     /**
@@ -116,7 +119,54 @@ public class CourseService {
         // 验证更新数据
         validatePartialUpdates(updates);
 
-        return courseRepository.partialUpdate(id, updates);
+        // 获取现有课程
+        Optional<Course> existingCourse = courseRepository.findById(id);
+        if (existingCourse.isPresent()) {
+            Course course = existingCourse.get();
+            
+            // 应用部分更新
+            for (Map.Entry<String, Object> entry : updates.entrySet()) {
+                String field = entry.getKey();
+                Object value = entry.getValue();
+                
+                switch (field) {
+                    case "code":
+                        course.setCode((String) value);
+                        break;
+                    case "title":
+                        course.setTitle((String) value);
+                        break;
+                    case "description":
+                        course.setDescription((String) value);
+                        break;
+                    case "credits":
+                        course.setCredits((Integer) value);
+                        break;
+                    case "capacity":
+                        course.setCapacity((Integer) value);
+                        break;
+                    case "enrolled":
+                        course.setEnrolled((Integer) value);
+                        break;
+                    case "instructorId":
+                        course.setInstructorId((String) value);
+                        break;
+                    case "scheduleId":
+                        course.setScheduleId((String) value);
+                        break;
+                    case "location":
+                        course.setLocation((String) value);
+                        break;
+                    // 可以根据需要添加更多字段
+                }
+            }
+            
+            // 保存更新后的课程
+            return Optional.of(courseRepository.save(course));
+        }
+        
+        return Optional.empty();
+    }
     }
 
     /**
@@ -125,7 +175,11 @@ public class CourseService {
      * @return 如果删除成功返回true，否则返回false
      */
     public boolean deleteCourse(UUID id) {
-        return courseRepository.deleteById(id);
+        if (courseRepository.existsById(id)) {
+            courseRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     /**
