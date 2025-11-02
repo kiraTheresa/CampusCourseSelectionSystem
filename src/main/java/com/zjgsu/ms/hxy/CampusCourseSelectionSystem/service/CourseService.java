@@ -3,6 +3,7 @@ package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.CourseRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -59,6 +60,7 @@ public class CourseService {
      * @return 创建后的课程
      * @throws IllegalArgumentException 如果课程编号已存在或数据验证失败
      */
+    @Transactional
     public Course createCourse(Course course) {
         // 验证课程数据
         validateCourse(course);
@@ -81,6 +83,7 @@ public class CourseService {
      * @return 更新后的课程Optional
      * @throws IllegalArgumentException 如果数据验证失败或课程不存在
      */
+    @Transactional
     public Optional<Course> updateCourse(UUID id, Course course) {
         // 验证课程是否存在
         if (!courseRepository.existsById(id)) {
@@ -100,7 +103,6 @@ public class CourseService {
         // 设置ID并保存
         course.setId(id);
         return Optional.of(courseRepository.save(course));
-    }
     }
 
     /**
@@ -167,13 +169,13 @@ public class CourseService {
         
         return Optional.empty();
     }
-    }
 
     /**
      * 删除课程
      * @param id 课程ID
      * @return 如果删除成功返回true，否则返回false
      */
+    @Transactional
     public boolean deleteCourse(UUID id) {
         if (courseRepository.existsById(id)) {
             courseRepository.deleteById(id);
@@ -373,6 +375,7 @@ public class CourseService {
      * @param courseId 课程ID
      * @return 更新后的课程Optional
      */
+    @Transactional
     public Optional<Course> incrementEnrolled(UUID courseId) {
         Optional<Course> courseOpt = courseRepository.findById(courseId);
         if (courseOpt.isPresent()) {
@@ -388,6 +391,7 @@ public class CourseService {
      * @param courseId 课程ID
      * @return 更新后的课程Optional
      */
+    @Transactional
     public Optional<Course> decrementEnrolled(UUID courseId) {
         Optional<Course> courseOpt = courseRepository.findById(courseId);
         if (courseOpt.isPresent()) {

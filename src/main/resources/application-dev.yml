@@ -1,0 +1,37 @@
+spring:
+  # 开发环境使用 H2 内存数据库
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # H2 控制台配置（便于开发调试）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # 开发环境自动更新表结构
+    show-sql: true  # 开发环境显示 SQL 日志
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true  # 格式化 SQL 输出
+  sql:
+    init:
+      mode: always  # 开发环境自动执行初始化脚本
+      data-locations: classpath:db/data.sql
+      schema-locations: classpath:db/schema.sql
+
+logging:
+  level:
+    root: INFO
+    com.zjgsu.ms.hxy.CampusCourseSelectionSystem: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+

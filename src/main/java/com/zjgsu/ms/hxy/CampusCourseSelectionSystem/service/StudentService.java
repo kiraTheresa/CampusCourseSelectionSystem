@@ -3,10 +3,12 @@ package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.exception.BusinessException;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.exception.ResourceNotFoundException;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.EnrollmentStatus;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Student;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -84,6 +86,7 @@ public class StudentService {
      * @return 创建后的学生
      * @throws IllegalArgumentException 如果学号或邮箱已存在，或数据验证失败
      */
+    @Transactional
     public Student createStudent(Student student) {
         // 验证学生数据
         validateStudent(student);
@@ -111,6 +114,7 @@ public class StudentService {
      * @return 更新后的学生Optional
      * @throws IllegalArgumentException 如果数据验证失败或学生不存在
      */
+    @Transactional
     public Optional<Student> updateStudent(UUID id, Student student) {
         // 验证学生是否存在
         if (!studentRepository.existsById(id)) {
@@ -143,6 +147,7 @@ public class StudentService {
      * @param id 学生ID
      * @throws IllegalArgumentException 如果学生存在选课记录或学生不存在
      */
+    @Transactional
     public void deleteStudent(UUID id) {
         if (!studentRepository.existsById(id)) {
             throw new ResourceNotFoundException("学生不存在，ID: " + id);
@@ -367,8 +372,8 @@ public class StudentService {
         // 活跃记录：状态为 ENROLLED 或 COMPLETED（未退课的）
         return enrollments.stream()
                 .anyMatch(enrollment ->
-                        "ENROLLED".equals(enrollment.getStatus()) ||
-                                "COMPLETED".equals(enrollment.getStatus()));
+                        EnrollmentStatus.ENROLLED.equals(enrollment.getStatus()) ||
+                                EnrollmentStatus.COMPLETED.equals(enrollment.getStatus()));
     }
 
     //

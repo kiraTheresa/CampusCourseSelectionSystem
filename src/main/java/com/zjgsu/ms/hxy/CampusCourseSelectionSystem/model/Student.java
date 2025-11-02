@@ -25,6 +25,12 @@ import java.util.UUID;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "studentId"),
                 @UniqueConstraint(columnNames = "email")
+        },
+        indexes = {
+                @Index(name = "idx_student_id", columnList = "studentId"),
+                @Index(name = "idx_email", columnList = "email"),
+                @Index(name = "idx_major", columnList = "major"),
+                @Index(name = "idx_grade", columnList = "grade")
         })
 public class Student {
 

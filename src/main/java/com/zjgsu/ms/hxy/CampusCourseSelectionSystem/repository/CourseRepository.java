@@ -4,6 +4,7 @@ import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -67,4 +68,18 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
      * @return 如果课程编号存在返回true，否则返回false
      */
     boolean existsByCode(String code);
+    
+    /**
+     * 查找有剩余容量的课程（已选人数小于容量）
+     * @return 有剩余容量的课程列表
+     */
+    @Query("SELECT c FROM Course c WHERE c.enrolled < c.capacity")
+    List<Course> findCoursesWithAvailableCapacity();
+    
+    /**
+     * 统计有剩余容量的课程数量
+     * @return 有剩余容量的课程数量
+     */
+    @Query("SELECT COUNT(c) FROM Course c WHERE c.enrolled < c.capacity")
+    long countCoursesWithAvailableCapacity();
 }

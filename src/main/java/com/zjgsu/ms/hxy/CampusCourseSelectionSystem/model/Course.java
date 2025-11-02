@@ -19,6 +19,12 @@ import java.util.UUID;
 @Table(name = "courses",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "code")
+        },
+        indexes = {
+                @Index(name = "idx_code", columnList = "code"),
+                @Index(name = "idx_instructor_id", columnList = "instructor_id"),
+                @Index(name = "idx_schedule_id", columnList = "schedule_id"),
+                @Index(name = "idx_title", columnList = "title")
         })
 public class Course {
 

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: CampusCourseSelectionSystem
+  profiles:
+    active: dev  # 默认使用开发环境
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 生产环境使用 validate
+    show-sql: false  # 生产环境关闭 SQL 日志
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: false
+  sql:
+    init:
+      mode: never  # 不自动执行初始化脚本
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.zjgsu.ms.hxy.CampusCourseSelectionSystem: INFO
+

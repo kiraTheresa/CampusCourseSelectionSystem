@@ -1,106 +1,258 @@
-<<<<<<< HEAD
 # 校园选课管理系统
 
 ## 项目说明
 
 校园选课管理系统是一个基于Spring Boot开发的后端API服务，提供完整的课程管理、学生管理和选课管理功能。系统采用RESTful API设计风格，支持课程的增删改查、学生信息管理、选课退课、成绩录入等核心业务功能。
 
+**当前版本**: 1.1（支持 MySQL 数据库和多环境配置）
+
 ### 主要功能模块
 
 1. **课程管理**
    - 创建、查询、更新、删除课程
    - 查看课程详情和选课人数
+   - 查询有剩余容量的课程
 
 2. **学生管理**
    - 学生信息的增删改查
    - 学号唯一性校验
+   - 按专业、年级筛选学生
 
 3. **选课管理**
    - 学生选课和退课
    - 查询学生选课记录
    - 更新选课状态和成绩
+   - 支持选课状态枚举（ENROLLED, WITHDRAWN, COMPLETED, FAILED）
 
 ## 技术栈
 
-- **后端框架**: Spring Boot 2.x
+- **后端框架**: Spring Boot 3.4.10
 - **ORM框架**: Spring Data JPA
-- **数据库**: MySQL/PostgreSQL
-- **API文档**: OpenAPI 3.0 (Swagger)
+- **数据库**: 
+  - 开发环境：H2（内存数据库）
+  - 生产环境：MySQL 8.0+
 - **构建工具**: Maven
+- **Java版本**: JDK 17
 
 ## 如何运行项目
 
 ### 前置条件
 
-- JDK 1.8 或更高版本
+- JDK 17 或更高版本
 - Maven 3.6 或更高版本
-- MySQL 8.0 或 PostgreSQL 10 或更高版本
+- MySQL 8.0 或更高版本（生产环境）
+- H2 数据库（开发环境，已包含在依赖中）
 
 ### 环境配置
 
-1. 克隆项目代码
+#### 1. 克隆项目代码
 
-2. 配置数据库连接
-   - 修改 `src/main/resources/application.properties` 或 `application.yml` 文件中的数据库连接信息
+```bash
+git clone <repository-url>
+cd CampusCourseSelectionSystem
+```
 
-3. 创建数据库
-   ```sql
-   CREATE DATABASE campus_course_selection;
-   ```
+#### 2. 数据库配置
+
+项目支持多环境配置，默认使用开发环境（H2内存数据库）。
+
+##### 开发环境（H2）- 默认
+
+无需额外配置，应用启动时会自动使用 H2 内存数据库。
+
+- H2 控制台访问地址：`http://localhost:8080/h2-console`
+- JDBC URL: `jdbc:h2:mem:testdb`
+- 用户名: `sa`
+- 密码: （空）
+
+##### 生产环境（MySQL）
+
+1. 创建数据库：
+```sql
+CREATE DATABASE campus_course_selection_system 
+    CHARACTER SET utf8mb4 
+    COLLATE utf8mb4_unicode_ci;
+```
+
+2. 配置环境变量或修改 `application-prod.yml`：
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/campus_course_selection_system?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8mb4
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+```
+
+3. 启动时指定生产环境配置：
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
+或设置环境变量：
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+mvn spring-boot:run
+```
+
+#### 3. 环境切换
+
+- **开发环境**（默认）: 使用 `application-dev.yml`，H2 内存数据库
+- **生产环境**: 使用 `application-prod.yml`，MySQL 数据库
+
+通过以下方式切换：
+- 环境变量: `SPRING_PROFILES_ACTIVE=prod`
+- 启动参数: `-Dspring.profiles.active=prod`
+- `application.yml` 中的 `spring.profiles.active` 配置
 
 ### 启动项目
 
 #### 方法一：使用Maven命令
 
 ```bash
+# 开发环境（默认）
 mvn spring-boot:run
+
+# 生产环境
+mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
 #### 方法二：打包后运行
 
 ```bash
 mvn clean package
-java -jar target/CampusCourseSelectionSystem-1.0.jar
+java -jar target/CampusCourseSelectionSystem-0.0.1-SNAPSHOT.jar
+
+# 生产环境
+java -jar target/CampusCourseSelectionSystem-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 ```
 
 ### 访问系统
 
-- 系统启动后，API接口地址：`http://localhost:8080/api`
-- OpenAPI文档地址：`http://localhost:8080/swagger-ui.html`
+- API接口地址：`http://localhost:8080/api`
+- 健康检查接口：`http://localhost:8080/health`
+- 数据库健康检查：`http://localhost:8080/health/db`
+- H2控制台（仅开发环境）：`http://localhost:8080/h2-console`
+
+### 数据库健康检查
+
+系统提供了数据库健康检查接口，用于验证数据库连接状态：
+
+```bash
+# 检查数据库连接
+curl http://localhost:8080/health/db
+```
+
+响应示例：
+```json
+{
+  "status": "UP",
+  "message": "数据库连接正常",
+  "connection": "ok",
+  "jpa": "ok",
+  "repositories": {
+    "course": "ok",
+    "student": "ok",
+    "enrollment": "ok"
+  },
+  "statistics": {
+    "courses": 5,
+    "students": 10,
+    "enrollments": 15
+  },
+  "database": {
+    "url": "jdbc:h2:mem:testdb",
+    "driver": "H2 JDBC Driver"
+  },
+  "timestamp": 1234567890
+}
+```
 
 ## API 接口列表
 
 ### 课程管理接口
 
-| 接口路径 | 方法 | 功能描述 | 请求体 (JSON) | 成功响应 (200 OK) |
-|---------|------|---------|--------------|-------------------|
-| `/api/courses` | `GET` | 查询所有课程 | N/A | `{"code": 200, "message": "成功", "data": [{课程对象列表}]}` |
-| `/api/courses` | `POST` | 创建新课程 | `{"code": "CS101", "title": "课程标题", "instructorId": "教师ID", "scheduleId": "排课ID", "capacity": 60}` | `{"code": 201, "message": "课程创建成功", "data": {课程对象}}` |
-| `/api/courses/{id}` | `GET` | 查询课程详情 | N/A | `{"code": 200, "message": "成功", "data": {课程对象}}` |
-| `/api/courses/{id}` | `PUT` | 更新课程信息 | `{"title": "更新标题", "capacity": 80}` | `{"code": 200, "message": "课程更新成功", "data": {课程对象}}` |
-| `/api/courses/{id}` | `DELETE` | 删除课程 | N/A | `{"code": 200, "message": "课程删除成功", "data": null}` |
+| 接口路径 | 方法 | 功能描述 |
+|---------|------|---------|
+| `/api/courses` | `GET` | 查询所有课程 |
+| `/api/courses` | `POST` | 创建新课程 |
+| `/api/courses/{id}` | `GET` | 查询课程详情 |
+| `/api/courses/{id}` | `PUT` | 更新课程信息 |
+| `/api/courses/{id}` | `DELETE` | 删除课程 |
+| `/api/courses/available` | `GET` | 查询有剩余容量的课程 |
 
 ### 学生管理接口
 
-| 接口路径 | 方法 | 功能描述 | 请求体 (JSON) | 成功响应 (200 OK) |
-|---------|------|---------|--------------|-------------------|
-| `/api/students` | `GET` | 查询所有学生 | N/A | `{"code": 200, "message": "成功", "data": [{学生对象列表}]}` |
-| `/api/students` | `POST` | 创建新学生 | `{"studentId": "2024001", "name": "学生姓名", "major": "专业", "grade": 2024, "email": "邮箱"}` | `{"code": 201, "message": "学生创建成功", "data": {学生对象}}` |
-| `/api/students/{id}` | `GET` | 查询学生详情 | N/A | `{"code": 200, "message": "成功", "data": {学生对象}}` |
-| `/api/students/{id}` | `PUT` | 更新学生信息 | `{"name": "更新姓名", "email": "更新邮箱"}` | `{"code": 200, "message": "学生更新成功", "data": {学生对象}}` |
-| `/api/students/check-student-id/{studentId}` | `GET` | 检查学号是否存在 | N/A | `{"code": 200, "message": "成功", "data": {"exists": true/false, "message": "提示信息"}}` |
+| 接口路径 | 方法 | 功能描述 |
+|---------|------|---------|
+| `/api/students` | `GET` | 查询所有学生 |
+| `/api/students` | `POST` | 创建新学生 |
+| `/api/students/{id}` | `GET` | 查询学生详情 |
+| `/api/students/{id}` | `PUT` | 更新学生信息 |
+| `/api/students/{id}` | `DELETE` | 删除学生 |
 
 ### 选课管理接口
 
-| 接口路径 | 方法 | 功能描述 | 请求体 (JSON) | 成功响应 (200 OK) |
-|---------|------|---------|--------------|-------------------|
-| `/api/enrollments` | `POST` | 学生选课 | `{"courseId": "课程ID", "studentId": "学生ID"}` | `{"code": 201, "message": "选课成功", "data": {选课记录}}` |
-| `/api/enrollments/student/{studentId}` | `GET` | 查询学生选课记录 | N/A | `{"code": 200, "message": "成功", "data": [{选课记录列表}]}` |
-| `/api/enrollments/course/{courseId}` | `GET` | 查询课程选课列表 | N/A | `{"code": 200, "message": "成功", "data": [{选课记录列表}]}` |
-| `/api/enrollments/{id}/status` | `PUT` | 更新选课状态 | `{"status": "COMPLETED"}` | `{"code": 200, "message": "状态更新成功", "data": {选课记录}}` |
-| `/api/enrollments/{id}/grade` | `PUT` | 更新成绩 | `{"grade": 85.5}` | `{"code": 200, "message": "成绩更新成功", "data": {选课记录}}` |
-| `/api/enrollments/{id}` | `DELETE` | 退课 | N/A | `{"code": 200, "message": "退课成功", "data": null}` |
-| `/api/enrollments/course/{courseId}/student/{studentId}` | `DELETE` | 根据课程和学生退课 | N/A | `{"code": 200, "message": "退课成功", "data": null}` |
+| 接口路径 | 方法 | 功能描述 |
+|---------|------|---------|
+| `/api/enrollments` | `POST` | 学生选课 |
+| `/api/enrollments/student/{studentId}` | `GET` | 查询学生选课记录 |
+| `/api/enrollments/course/{courseId}` | `GET` | 查询课程选课列表 |
+| `/api/enrollments/{id}/status` | `PUT` | 更新选课状态 |
+| `/api/enrollments/{id}/grade` | `PUT` | 更新成绩 |
+| `/api/enrollments/{id}` | `DELETE` | 退课 |
+
+### 健康检查接口
+
+| 接口路径 | 方法 | 功能描述 |
+|---------|------|---------|
+| `/health` | `GET` | 应用健康检查 |
+| `/health/db` | `GET` | 数据库健康检查 |
+
+## 数据库初始化
+
+### 自动初始化（开发环境）
+
+开发环境使用 H2 数据库时，系统会自动执行初始化脚本：
+- `src/main/resources/db/schema.sql` - 表结构（JPA会自动创建，此文件为参考）
+- `src/main/resources/db/data.sql` - 测试数据
+
+### 手动初始化（生产环境）
+
+生产环境使用 MySQL 时，建议：
+
+1. **使用 JPA 自动创建表结构**（推荐）：
+   - 设置 `spring.jpa.hibernate.ddl-auto=update`（首次部署）
+   - 生产环境建议使用 `validate` 并通过迁移工具管理
+
+2. **手动执行 SQL 脚本**：
+```bash
+mysql -u root -p campus_course_selection_system < src/main/resources/db/schema.sql
+mysql -u root -p campus_course_selection_system < src/main/resources/db/data.sql
+```
+
+3. **使用数据库迁移工具**（推荐）：
+   - Flyway
+   - Liquibase
+
+## 版本更新记录
+
+### v1.1 (2024)
+
+- ✅ 将模拟数据库替换为 MySQL 数据库
+- ✅ 添加 H2 数据库支持（开发环境）
+- ✅ 实现多环境配置（dev/prod）
+- ✅ 完善 JPA 实体注解和索引优化
+- ✅ 添加选课状态枚举类型
+- ✅ 完善 Repository 查询方法
+- ✅ Service 层添加事务管理
+- ✅ 添加数据库健康检查接口
+- ✅ 优化异常处理机制
+
+### v1.0 (2024)
+
+- 初始版本
+- 基本的 CRUD 功能
+- 模拟数据库实现
 
 ## 测试说明
 
@@ -124,15 +276,10 @@ java -jar target/CampusCourseSelectionSystem-1.0.jar
 2. 打开 `API测试.http` 文件
 3. 点击每个请求左侧的运行按钮执行测试
 
-#### 编写自定义测试
+#### 数据库健康检查测试
 
-可以基于现有的测试文档，根据具体业务需求编写新的测试用例：
-
-```http
-POST http://localhost:8080/api/[endpoint]
-Content-Type: application/json
-
-{"your": "request", "body": "here"}
+```bash
+curl http://localhost:8080/health/db
 ```
 
 ## 注意事项
@@ -141,11 +288,25 @@ Content-Type: application/json
 2. 自动生成字段（如id、创建时间）在创建请求中不需要提供
 3. 更新操作支持部分字段更新
 4. 系统对关键数据进行唯一性校验和业务规则验证
+5. 选课状态使用枚举类型：`ENROLLED`, `WITHDRAWN`, `COMPLETED`, `FAILED`
+6. 开发环境数据存储在内存中，应用重启后数据会丢失
+7. 生产环境请确保数据库连接配置正确，建议使用连接池配置
+
+## 故障排除
+
+### 数据库连接问题
+
+1. 检查数据库是否启动
+2. 验证数据库连接配置（用户名、密码、URL）
+3. 检查数据库是否已创建
+4. 使用健康检查接口验证：`curl http://localhost:8080/health/db`
+
+### H2 控制台无法访问
+
+- 确认使用开发环境配置
+- 检查 `application-dev.yml` 中的 H2 控制台配置
+- 访问地址：`http://localhost:8080/h2-console`
 
 ## License
 
 MIT
-=======
-# 
-韩教授 这是我本次的作业
->>>>>>> e72f7d2447aadaff280c2a6753da8c341260a0d2

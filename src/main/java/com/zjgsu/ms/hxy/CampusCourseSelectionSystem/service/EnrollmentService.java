@@ -2,9 +2,11 @@ package com.zjgsu.ms.hxy.CampusCourseSelectionSystem.service;
 
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Course;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.Enrollment;
+import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.EnrollmentStatus;
 import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.repository.EnrollmentRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -78,15 +80,29 @@ public class EnrollmentService {
 
     /**
      * 根据状态获取选课记录
-     * @param status 选课状态
+     * @param status 选课状态字符串
      * @return 指定状态的所有选课记录列表
      */
     public List<Enrollment> getEnrollmentsByStatus(String status) {
         if (!StringUtils.hasText(status)) {
             throw new IllegalArgumentException("状态不能为空");
         }
-        if (!isValidStatus(status)) {
+        try {
+            EnrollmentStatus statusEnum = EnrollmentStatus.valueOf(status.toUpperCase());
+            return enrollmentRepository.findByStatus(statusEnum);
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("无效的选课状态: " + status);
+        }
+    }
+
+    /**
+     * 根据状态枚举获取选课记录
+     * @param status 选课状态枚举
+     * @return 指定状态的所有选课记录列表
+     */
+    public List<Enrollment> getEnrollmentsByStatus(EnrollmentStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("状态不能为空");
         }
         return enrollmentRepository.findByStatus(status);
     }
@@ -100,7 +116,7 @@ public class EnrollmentService {
         if (!StringUtils.hasText(courseId)) {
             throw new IllegalArgumentException("课程ID不能为空");
         }
-        return enrollmentRepository.countByCourseIdAndStatusNot(courseId, "WITHDRAWN");
+        return enrollmentRepository.countByCourseIdAndStatusNot(courseId, EnrollmentStatus.WITHDRAWN);
     }
 
     /**
@@ -112,21 +128,38 @@ public class EnrollmentService {
         if (!StringUtils.hasText(studentId)) {
             throw new IllegalArgumentException("学生ID不能为空");
         }
-        return enrollmentRepository.countByStudentIdAndStatusNot(studentId, "WITHDRAWN");
+        return enrollmentRepository.countByStudentIdAndStatusNot(studentId, EnrollmentStatus.WITHDRAWN);
     }
 
     /**
      * 更新选课状态
      * @param id 选课记录ID
-     * @param status 新状态
+     * @param status 新状态字符串
      * @return 更新后的选课记录Optional
      */
+    @Transactional
     public Optional<Enrollment> updateEnrollmentStatus(UUID id, String status) {
         if (!StringUtils.hasText(status)) {
             throw new IllegalArgumentException("状态不能为空");
         }
-        if (!isValidStatus(status)) {
+        try {
+            EnrollmentStatus statusEnum = EnrollmentStatus.valueOf(status.toUpperCase());
+            return updateEnrollmentStatus(id, statusEnum);
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("无效的选课状态: " + status);
+        }
+    }
+
+    /**
+     * 更新选课状态（枚举版本）
+     * @param id 选课记录ID
+     * @param status 新状态枚举
+     * @return 更新后的选课记录Optional
+     */
+    @Transactional
+    public Optional<Enrollment> updateEnrollmentStatus(UUID id, EnrollmentStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("状态不能为空");
         }
 
         Optional<Enrollment> enrollment = enrollmentRepository.findById(id);
@@ -144,6 +177,7 @@ public class EnrollmentService {
      * @param grade 成绩
      * @return 更新后的选课记录Optional
      */
+    @Transactional
     public Optional<Enrollment> updateGrade(UUID id, Double grade) {
         if (grade == null) {
             throw new IllegalArgumentException("成绩不能为空");
@@ -173,6 +207,7 @@ public class EnrollmentService {
      * @param grades 学生ID到成绩的映射
      * @return 更新成功的数量
      */
+    @Transactional
     public int updateGradesForCourse(String courseId, Map<String, Double> grades) {
         if (!StringUtils.hasText(courseId)) {
             throw new IllegalArgumentException("课程ID不能为空");
@@ -209,6 +244,7 @@ public class EnrollmentService {
      * @param id 选课记录ID
      * @return 如果删除成功返回true，否则返回false
      */
+    @Transactional
     public boolean deleteEnrollment(UUID id) {
         if (enrollmentRepository.existsById(id)) {
             enrollmentRepository.deleteById(id);
@@ -227,7 +263,7 @@ public class EnrollmentService {
         if (!StringUtils.hasText(courseId) || !StringUtils.hasText(studentId)) {
             return false;
         }
-        return enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, "WITHDRAWN");
+        return enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, EnrollmentStatus.WITHDRAWN);
     }
 
     /**
@@ -251,7 +287,7 @@ public class EnrollmentService {
 
         List<Double> grades = enrollments.stream()
                 .filter(enrollment -> enrollment.getGrade() != null &&
-                        "COMPLETED".equals(enrollment.getStatus()))
+                        EnrollmentStatus.COMPLETED.equals(enrollment.getStatus()))
                 .map(Enrollment::getGrade)
                 .toList();
 
@@ -322,21 +358,12 @@ public class EnrollmentService {
     }
 
     /**
-     * 验证状态是否有效
-     */
-    private boolean isValidStatus(String status) {
-        return status != null &&
-                (status.equals("ENROLLED") || status.equals("WITHDRAWN") ||
-                        status.equals("COMPLETED") || status.equals("FAILED"));
-    }
-
-    /**
      * 检查是否可以退课
      */
     private boolean canWithdrawCourse(Enrollment enrollment) {
         // 这里可以添加更多的业务规则
         // 例如：课程是否已开始、是否有成绩等
-        return "ENROLLED".equals(enrollment.getStatus()) && enrollment.getGrade() == null;
+        return EnrollmentStatus.ENROLLED.equals(enrollment.getStatus()) && enrollment.getGrade() == null;
     }
 
     /**
@@ -344,8 +371,8 @@ public class EnrollmentService {
      */
     private boolean canUpdateGrade(Enrollment enrollment) {
         // 只有在课程进行中或已完成的状态下才能更新成绩
-        return "ENROLLED".equals(enrollment.getStatus()) ||
-                "COMPLETED".equals(enrollment.getStatus());
+        return EnrollmentStatus.ENROLLED.equals(enrollment.getStatus()) ||
+                EnrollmentStatus.COMPLETED.equals(enrollment.getStatus());
     }
 
     /**
@@ -372,6 +399,7 @@ public class EnrollmentService {
     /**
      * 学生选课（完善版）
      */
+    @Transactional
     public Enrollment enrollCourse(String courseId, String studentId) {
         // 验证输入参数
         validateCourseAndStudentIds(courseId, studentId);
@@ -388,7 +416,7 @@ public class EnrollmentService {
         }
 
         // 检查是否已经选过该课程
-        if (enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, "WITHDRAWN")) {
+        if (enrollmentRepository.existsByCourseIdAndStudentIdAndStatusNot(courseId, studentId, EnrollmentStatus.WITHDRAWN)) {
             throw new IllegalArgumentException("学生已选该课程，无法重复选课");
         }
 
@@ -410,6 +438,7 @@ public class EnrollmentService {
     /**
      * 学生退课（完善版）
      */
+    @Transactional
     public boolean withdrawCourse(String courseId, String studentId) {
         // 验证输入参数
         validateCourseAndStudentIds(courseId, studentId);
@@ -420,7 +449,7 @@ public class EnrollmentService {
             Enrollment enroll = enrollment.get();
             // 检查是否可以退课
             if (canWithdrawCourse(enroll)) {
-                enroll.setStatus("WITHDRAWN");
+                enroll.setStatus(EnrollmentStatus.WITHDRAWN);
                 enrollmentRepository.save(enroll);
 
                 // 级联更新：减少课程选课人数

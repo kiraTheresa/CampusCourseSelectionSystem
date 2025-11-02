@@ -18,6 +18,12 @@ import java.util.UUID;
 @Table(name = "enrollments",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"course_id", "student_id"})
+        },
+        indexes = {
+                @Index(name = "idx_course_id", columnList = "course_id"),
+                @Index(name = "idx_student_id", columnList = "student_id"),
+                @Index(name = "idx_status", columnList = "status"),
+                @Index(name = "idx_course_student", columnList = "course_id,student_id")
         })
 public class Enrollment {
 
@@ -50,13 +56,12 @@ public class Enrollment {
     private LocalDateTime enrolledAt;
 
     /**
-     * 选课状态（如 "ENROLLED"、"WITHDRAWN"），默认 "ENROLLED"
+     * 选课状态枚举，默认 ENROLLED
      */
-    @NotBlank(message = "选课状态不能为空")
-    @Pattern(regexp = "^(ENROLLED|WITHDRAWN|COMPLETED|FAILED)$",
-            message = "选课状态必须是 ENROLLED, WITHDRAWN, COMPLETED 或 FAILED")
+    @NotNull(message = "选课状态不能为空")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "ENROLLED";
+    private EnrollmentStatus status = EnrollmentStatus.ENROLLED;
 
     /**
      * 学生该课程成绩（可为空，课程结束后填入）
@@ -79,7 +84,7 @@ public class Enrollment {
     public Enrollment(String courseId, String studentId) {
         this.courseId = courseId;
         this.studentId = studentId;
-        this.status = "ENROLLED";
+        this.status = EnrollmentStatus.ENROLLED;
     }
 
     /**
@@ -90,7 +95,7 @@ public class Enrollment {
      * @param status 选课状态
      * @param grade 成绩
      */
-    public Enrollment(String courseId, String studentId, String status, Double grade) {
+    public Enrollment(String courseId, String studentId, EnrollmentStatus status, Double grade) {
         this.courseId = courseId;
         this.studentId = studentId;
         this.status = status;
@@ -131,12 +136,28 @@ public class Enrollment {
         this.enrolledAt = enrolledAt;
     }
 
-    public String getStatus() {
+    public EnrollmentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(EnrollmentStatus status) {
         this.status = status;
+    }
+    
+    /**
+     * 获取状态的字符串表示（用于向后兼容）
+     */
+    public String getStatusString() {
+        return status != null ? status.name() : null;
+    }
+    
+    /**
+     * 设置状态的字符串表示（用于向后兼容）
+     */
+    public void setStatusString(String statusString) {
+        if (statusString != null) {
+            this.status = EnrollmentStatus.valueOf(statusString);
+        }
     }
 
     public Double getGrade() {
