@@ -24,9 +24,9 @@ spring:
         format_sql: true  # 格式化 SQL 输出
   sql:
     init:
-      mode: always  # 开发环境自动执行初始化脚本
-      data-locations: classpath:db/data.sql
-      schema-locations: classpath:db/schema.sql
+      mode: never  # 开发环境禁用 SQL 脚本执行，使用 JPA 自动创建表结构
+      # 注意：H2 不支持 MySQL 语法，因此不使用 schema.sql
+      # JPA 的 ddl-auto=update 会自动根据实体类创建表结构
 
 logging:
   level:
