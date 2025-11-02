@@ -81,11 +81,32 @@ public class Course {
     private LocalDateTime createdAt;
 
     /**
-     * 新增字段
      * 当前选课人数
      */
     @Column(nullable = false)
     private Integer enrolled = 0;
+
+    /**
+     * 课程描述（可选）
+     */
+    @Size(max = 1000, message = "课程描述长度不能超过1000个字符")
+    @Column(length = 1000)
+    private String description;
+
+    /**
+     * 课程学分（可选）
+     */
+    @Min(value = 0, message = "学分不能为负数")
+    @Max(value = 10, message = "学分不能超过10")
+    @Column
+    private Integer credits;
+
+    /**
+     * 上课地点（可选）
+     */
+    @Size(max = 200, message = "上课地点长度不能超过200个字符")
+    @Column(length = 200)
+    private String location;
 
     // 默认构造函数
     public Course() {
@@ -175,6 +196,30 @@ public class Course {
         this.enrolled = enrolled;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getCredits() {
+        return credits;
+    }
+
+    public void setCredits(Integer credits) {
+        this.credits = credits;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
     @Override
     public String toString() {
         return "Course{" +
@@ -186,6 +231,9 @@ public class Course {
                 ", capacity=" + capacity +
                 ", createdAt=" + createdAt +
                 ", enrolled=" + enrolled +
+                ", description='" + description + '\'' +
+                ", credits=" + credits +
+                ", location='" + location + '\'' +
                 '}';
     }
 
