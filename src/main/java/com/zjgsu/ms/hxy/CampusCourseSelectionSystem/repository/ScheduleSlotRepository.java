@@ -4,6 +4,7 @@ import com.zjgsu.ms.hxy.CampusCourseSelectionSystem.model.ScheduleSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public interface ScheduleSlotRepository extends JpaRepository<ScheduleSlot, UUID
      * @param startTime 开始时间
      * @return 从该时间开始的所有时间安排列表
      */
-    List<ScheduleSlot> findByStartTime(String startTime);
+    List<ScheduleSlot> findByStartTime(LocalTime startTime); // 修正：参数改为 LocalTime
 
     /**
      * 检查时间段ID是否存在

@@ -27,6 +27,13 @@ public class ScheduleSlot {
     private UUID id;
 
     /**
+     * 关联的课程安排ID，必填
+     */
+    @NotBlank(message = "课程安排ID不能为空")
+    @Column(name = "schedule_id", nullable = false, length = 50)
+    private String scheduleId;
+
+    /**
      * 课程上课星期（如 "MONDAY"），必填，可取值范围：MONDAY ~ SUNDAY
      */
     @NotBlank(message = "上课星期不能为空")
@@ -69,14 +76,16 @@ public class ScheduleSlot {
     }
 
     /**
-     * 带参构造函数（不含id和createdAt）
+     * 带参构造函数（包含所有字段，不含id和createdAt）
      *
+     * @param scheduleId 课程安排ID
      * @param dayOfWeek 上课星期
      * @param startTime 开始时间
      * @param endTime 结束时间
      * @param expectedAttendance 预计出勤人数
      */
-    public ScheduleSlot(String dayOfWeek, LocalTime startTime, LocalTime endTime, Integer expectedAttendance) {
+    public ScheduleSlot(String scheduleId, String dayOfWeek, LocalTime startTime, LocalTime endTime, Integer expectedAttendance) {
+        this.scheduleId = scheduleId;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -86,11 +95,13 @@ public class ScheduleSlot {
     /**
      * 带参构造函数（不含expectedAttendance）
      *
+     * @param scheduleId 课程安排ID
      * @param dayOfWeek 上课星期
      * @param startTime 开始时间
      * @param endTime 结束时间
      */
-    public ScheduleSlot(String dayOfWeek, LocalTime startTime, LocalTime endTime) {
+    public ScheduleSlot(String scheduleId, String dayOfWeek, LocalTime startTime, LocalTime endTime) {
+        this.scheduleId = scheduleId;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -104,6 +115,14 @@ public class ScheduleSlot {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(String scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
     public String getDayOfWeek() {
@@ -150,6 +169,7 @@ public class ScheduleSlot {
     public String toString() {
         return "ScheduleSlot{" +
                 "id=" + id +
+                ", scheduleId='" + scheduleId + '\'' +
                 ", dayOfWeek='" + dayOfWeek + '\'' +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
@@ -157,5 +177,4 @@ public class ScheduleSlot {
                 ", createdAt=" + createdAt +
                 '}';
     }
-
 }
