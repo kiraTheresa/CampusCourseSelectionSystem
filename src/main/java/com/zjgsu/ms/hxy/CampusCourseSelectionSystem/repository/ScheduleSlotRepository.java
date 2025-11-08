@@ -24,7 +24,7 @@ public interface ScheduleSlotRepository extends JpaRepository<ScheduleSlot, UUID
      * @param scheduleId 时间段ID
      * @return 包含时间安排的Optional，如果不存在则返回空Optional
      */
-    Optional<ScheduleSlot> findByScheduleId(String scheduleId);
+    Optional<ScheduleSlot> findByScheduleId(String scheduleId); //
 
     /**
      * 根据星期几查找时间安排

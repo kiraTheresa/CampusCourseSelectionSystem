@@ -68,7 +68,7 @@ public class Enrollment {
      */
     @DecimalMin(value = "0.0", message = "成绩不能低于0分")
     @DecimalMax(value = "100.0", message = "成绩不能高于100分")
-    @Column(precision = 5, scale = 2)
+    @Column(precision = 5)
     private Double grade;
 
     // 默认构造函数
@@ -181,3 +181,4 @@ public class Enrollment {
     }
 
 }
+
