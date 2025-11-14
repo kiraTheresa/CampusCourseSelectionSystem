@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.zjgsu.ms.hxy</groupId>
 	<artifactId>CampusCourseSelectionSystem</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.2.0</version>
 	<name>CampusCourseSelectionSystem</name>
 	<description>校园选课管理系统</description>
 	<url/>
